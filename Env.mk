@@ -9,7 +9,8 @@ OPENSSL ?= openssl
 GIT ?= git
 SBSIGN ?= sbsign
 
-EXTRA_CFLAGS ?=
-EXTRA_LDFLAGS ?=
+DESTDIR ?=
 
-DEBUG_BUILD ?=
+prefix ?= /usr
+libdir ?= $(prefix)/lib
+includedir ?= $(prefix)/include
