@@ -23,9 +23,18 @@ EDK2_PKG_LIBS_MdePkg := \
 	UefiBootServicesTableLib \
 	UefiLib
 
-define BUILD_EDK2_LIB
+define BUILD_EDK2_PKG
+	build -q -s -a $(EFI_ARCH) -b RELEASE -t GCC5 \
+	    -DSECURE_BOOT_ENABLE=TRUE -p \"$(1)/$(1).dsc\"; \
+	if [ \$$? -ne 0 ]; then \
+	    echo \"Failed to build $(1)\"; \
+	    exit 1; \
+	fi
+endef
+
+define BUILD_EDK2_PKG_LIBS
 	for lib in $(EDK2_PKG_LIBS_$(1)); do \
-	    build -q -s -u -a $(EFI_ARCH) -b RELEASE -t GCC5 \
+	    build -q -s -a $(EFI_ARCH) -b RELEASE -t GCC5 \
 		-DSECURE_BOOT_ENABLE=TRUE -p \"$(1)/$(1).dsc\" \
 		-m \"$(1)/Library/\$$lib/\$$lib.inf\"; \
 	    if [ \$$? -ne 0 ]; then \
@@ -38,12 +47,12 @@ endef
 define EDK2_LIB
 	$(shell \
 	    for lib in $(EDK2_PKG_LIBS_$(1)); do \
-		if [ x"$(1)" = x"MdePkg" ]; then \
-		    name="Mde"; \
+		if [ x\"$(1)\" = x\"MdePkg\" ]; then \
+		    name=\"Mde"; \
 		else \
-		    name="$(1)"; \
+		    name=\"$(1)\"; \
 		fi; \
-		echo "$(EDK2_TOPDIR)/Build/$$name/RELEASE_GCC5/$(EFI_ARCH)/$(1)/Library/$$lib/$$lib/OUTPUT/$$lib.lib"; \
+		echo \"$(EDK2_TOPDIR)/Build/\$$name/RELEASE_GCC5/$(EFI_ARCH)/$(1)/Library/\$$lib/\$$lib/OUTPUT/\$$lib.lib\"; \
 	    done; \
 	)
 endef
@@ -54,6 +63,11 @@ endef
 all: Makefile patch_openssl build_basetools build
 
 clean:
+	@echo "Cleaning edk2 ..."; \
+	cd $(EDK2_TOPDIR); \
+	bash -c "source ./edksetup.sh; \
+		  build clean; \
+		 "
 
 install: Makefile $(call EDK2_LIB,MdePkg)
 	@$(INSTALL) -d -m 755 "$(DESTDIR)$(libdir)/edk2"
@@ -93,12 +107,18 @@ patch_openssl:
         echo "$$basename applied"
 
 build_basetools:
-	echo "Building BaseTools ..."; \
+	@echo "Building BaseTools ..."; \
 	cd "$(EDK2_TOPDIR)"; \
 	$(MAKE) -C BaseTools/Source/C || { echo "Failed to build BaseTools"; exit 1; }
 
 build:
-	echo "Building edk2 ..."; \
+	@echo "Building edk2 ..."; \
 	cd $(EDK2_TOPDIR); \
 	bash -c "source ./edksetup.sh; \
-		 $(call BUILD_EDK2_LIB,MdePkg)"
+		 $(call BUILD_EDK2_PKG_LIBS,MdePkg); \
+		 $(call BUILD_EDK2_PKG,StdLib); \
+		 $(call BUILD_EDK2_PKG_LIBS,MdeModulePkg); \
+		 $(call BUILD_EDK2_PKG,FatPkg); \
+		 $(call BUILD_EDK2_PKG,ShellPkg); \
+		 $(call BUILD_EDK2_PKG,SecurityPkg); \
+		"
