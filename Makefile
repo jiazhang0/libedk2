@@ -12,7 +12,7 @@ else
 endif
 
 TOPDIR := $(shell pwd)
-EDK2_TOPDIR := $(TOPDIR)/edk2
+EDK2_TOPDIR ?= $(TOPDIR)/edk2
 
 EDK2_PKG_LIBS_MdePkg := \
 	BaseLib \
@@ -22,6 +22,10 @@ EDK2_PKG_LIBS_MdePkg := \
 	UefiRuntimeServicesTableLib \
 	UefiBootServicesTableLib \
 	UefiLib
+
+# These libraries cannot be built directly.
+EDK2_EXTRA_PKG_LIBS_MdePkg := \
+	UefiFileHandleLib
 
 define BUILD_EDK2_PKG
 	build -q -s -a $(EFI_ARCH) -b RELEASE -t GCC5 \
@@ -44,9 +48,9 @@ define BUILD_EDK2_PKG_LIBS
 	done
 endef
 
-define EDK2_LIB
+define INSTALL_EDK2_LIBS
 	$(shell \
-	    for lib in $(EDK2_PKG_LIBS_$(1)); do \
+	    for lib in $(EDK2_PKG_LIBS_$(1)) $(EDK2_EXTRA_PKG_LIBS_$(1)); do \
 		if [ x\"$(1)\" = x\"MdePkg\" ]; then \
 		    name=\"Mde"; \
 		else \
@@ -66,12 +70,12 @@ clean:
 	@echo "Cleaning edk2 ..."; \
 	cd $(EDK2_TOPDIR); \
 	bash -c "source ./edksetup.sh; \
-		  build clean; \
-		 "
+		 build clean; \
+		"
 
-install: Makefile $(call EDK2_LIB,MdePkg)
+install: Makefile $(call INSTALL_EDK2_LIBS,MdePkg)
 	@$(INSTALL) -d -m 755 "$(DESTDIR)$(libdir)/edk2"
-	@$(foreach x, $(call EDK2_LIB,MdePkg), $(INSTALL) -m 755 "$(x)" \
+	@$(foreach x, $(call INSTALL_EDK2_LIBS,MdePkg), $(INSTALL) -m 755 "$(x)" \
 	    "$(DESTDIR)$(libdir)/edk2/lib`basename $(patsubst %.lib,%,$(x))`.a";)
 	@$(INSTALL) -d -m 755 "$(DESTDIR)$(includedir)/edk2"
 	@cp -a "$(EDK2_TOPDIR)"/MdePkg/Include/* "$(DESTDIR)$(includedir)/edk2"
@@ -116,9 +120,6 @@ build:
 	cd $(EDK2_TOPDIR); \
 	bash -c "source ./edksetup.sh; \
 		 $(call BUILD_EDK2_PKG_LIBS,MdePkg); \
-		 $(call BUILD_EDK2_PKG,StdLib); \
-		 $(call BUILD_EDK2_PKG_LIBS,MdeModulePkg); \
-		 $(call BUILD_EDK2_PKG,FatPkg); \
 		 $(call BUILD_EDK2_PKG,ShellPkg); \
 		 $(call BUILD_EDK2_PKG,SecurityPkg); \
 		"
