@@ -99,29 +99,46 @@ tag:
 patch_openssl:
 	@echo "Checking openssl ..."; \
 	cd "$(EDK2_TOPDIR)/CryptoPkg/Library/OpensslLib"; \
-	pattern='openssl-[[:digit:]]\.[[:digit:]]\{1,2\}\.[[:digit:]]\{1,2\}[a-z]\?'; \
-	link=`grep -m 1 "^\s*http://www\.openssl\.org/source/$$pattern\.tar\.gz\s$$" \
-	    Patch-HOWTO.txt | grep -o "http.*\.tar\.gz"`; \
-	basename=`echo $$link | grep -o "$$pattern"`; \
-	[ x"$$basename" = x"" ] && { echo "Failed to find out openssl pattern"; exit 1; }; \
-	echo "$$basename used"; \
-	[ ! -d "$$basename" ] && { \
-	    [ ! -s "$$basename.tar.gz" ] && { \
-	        echo "Downloading $$basename ..."; \
-	        wget "$$link" || { echo "Failed to download $$basename"; exit 1; }; \
+	if [ -f Patch-HOWTO.txt ]; then \
+	    pattern='openssl-[[:digit:]]\.[[:digit:]]\{1,2\}\.[[:digit:]]\{1,2\}[a-z]\?'; \
+	    link=`grep -m 1 "^\s*http://www\.openssl\.org/source/$$pattern\.tar\.gz\s$$" \
+	        Patch-HOWTO.txt | grep -o "http.*\.tar\.gz"`; \
+	    dirname=`echo $$link | grep -o "$$pattern"`; \
+	    pkgname=dirname; \
+	    new_scheme=0; \
+	elif [ -f OpenSSL-HOWTO.txt ]; then \
+	    pattern='[[:digit:]]\.[[:digit:]]\{1,2\}\.[[:digit:]]\{1,2\}[a-z]\?'; \
+	    pkgname=openssl-`grep -m 1 "^\s*The latest official release is OpenSSL-$$pattern " \
+	        OpenSSL-HOWTO.txt | grep -o "$$pattern"`; \
+	    link="https://www.openssl.org/source/$$pkgname.tar.gz"; \
+	    dirname=openssl; \
+	    new_scheme=1; \
+	fi; \
+	[ x"$$dirname" = x"" ] && { echo "Failed to find out openssl pattern"; exit 1; }; \
+	echo "$$pkgname used"; \
+	[ ! -d "$$dirname" ] && { \
+	    [ ! -s "$$pkgname.tar.gz" ] && { \
+	        echo "Downloading $$pkgname ..."; \
+	        wget "$$link" || { echo "Failed to download $$pkgname"; exit 1; }; \
 	    }; \
-	    echo "Extracting $$basename ..."; \
-	    tar xzf "$$basename.tar.gz" || { echo "Failed to extract $$basename"; exit 1; }; \
-	    echo "Patching $$basename ..."; \
-	    cd "$$basename"; \
-	    patch -p1 -i "../EDKII_$$basename.patch" || { \
-	        echo "Failed to patch $$basename"; exit 1; \
-	    }; \
-	    cd ..; \
-	    echo "Installing $$basename ..."; \
-	    bash -c ./Install.sh || { echo "Failed to install $$basename"; exit 1; }; \
+	    echo "Extracting $$pkgname ..."; \
+	    tar xzf "$$pkgname.tar.gz" || { echo "Failed to extract $$pkgname"; exit 1; }; \
+	    if [ $$new_scheme -eq 0 ]; then \
+	        echo "Patching $$pkgname ..."; \
+	        cd "$$pkgname"; \
+	        patch -p1 -i "../EDKII_$$pkgname.patch" || { \
+	            echo "Failed to patch $$pkgname"; exit 1; \
+	        }; \
+	        cd ..; \
+	        echo "Installing $$pkgname ..."; \
+	        bash -c ./Install.sh || { echo "Failed to install $$pkgname"; exit 1; }; \
+	    else \
+	        mv "$$pkgname" "$$dirname"; \
+	        chmod +x ./process_files.pl; \
+	        ./process_files.pl; \
+	    fi; \
 	}; \
-        echo "$$basename applied"
+	echo "$$pkgname applied"
 
 build_basetools:
 	@echo "Building BaseTools ..."; \
