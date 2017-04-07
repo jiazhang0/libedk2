@@ -1,5 +1,5 @@
 libedk2
 =======
 
-This project targets to re-use the libraries retrieved from edk2 project,
-avoiding re-implementing them like gnu-efi.
+This project targets to easily build the drivers, and re-use the libraries
+retrieved from edk2 project, avoiding re-implementing them like gnu-efi.
