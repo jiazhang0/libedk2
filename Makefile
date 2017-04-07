@@ -79,7 +79,7 @@ define INSTALL_EDK2_EXTRA_LIBS
 endef
 
 .DEFAULT_GOAL := all
-.PHONE: all clean install tag patch_openssl build_basetools build
+.PHONE: all clean install tag patch_openssl build_basetools build build_libs
 
 all: Makefile patch_openssl build_basetools build
 
@@ -159,4 +159,11 @@ build:
 	bash -c "source ./edksetup.sh; \
 		 $(call BUILD_EDK2_PKG,Security); \
 		 $(call BUILD_EDK2_PKG_OVMF); \
+		"
+
+build_libs:
+	@echo "Building edk2 libraries ..."; \
+	cd $(EDK2_TOPDIR); \
+	bash -c "source ./edksetup.sh; \
+		 $(call BUILD_EDK2_PKG_LIBS,Mde); \
 		"
