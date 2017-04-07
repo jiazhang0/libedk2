@@ -43,6 +43,14 @@ define BUILD_EDK2_PKG
 	fi
 endef
 
+define BUILD_EDK2_PKG_OVMF
+	build $(EDKS_BUILD_OPTS) -p \"OvmfPkg/OvmfPkg$(EFI_ARCH).dsc\"; \
+	if [ \$$? -ne 0 ]; then \
+	    echo \"Failed to build OvmfPkg\"; \
+	    exit 1; \
+	fi
+endef
+
 define BUILD_EDK2_PKG_LIBS
 	for lib in $(EDK2_PKG_LIBS_$(1)); do \
 	    build $(EDKS_BUILD_OPTS) -p \"$(1)Pkg/$(1)Pkg.dsc\" \
@@ -149,6 +157,6 @@ build:
 	@echo "Building edk2 ..."; \
 	cd $(EDK2_TOPDIR); \
 	bash -c "source ./edksetup.sh; \
-		 $(call BUILD_EDK2_PKG_LIBS,Mde); \
 		 $(call BUILD_EDK2_PKG,Security); \
+		 $(call BUILD_EDK2_PKG_OVMF); \
 		"
