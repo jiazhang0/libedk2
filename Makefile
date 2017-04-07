@@ -71,7 +71,7 @@ define INSTALL_EDK2_EXTRA_LIBS
 endef
 
 .DEFAULT_GOAL := all
-.PHONE: all clean install tag patch_openssl build_basetools
+.PHONE: all clean install tag patch_openssl build_basetools build
 
 all: Makefile patch_openssl build_basetools build
 
