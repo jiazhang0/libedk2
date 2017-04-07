@@ -150,4 +150,5 @@ build:
 	cd $(EDK2_TOPDIR); \
 	bash -c "source ./edksetup.sh; \
 		 $(call BUILD_EDK2_PKG_LIBS,Mde); \
+		 $(call BUILD_EDK2_PKG,Security); \
 		"
