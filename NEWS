@@ -1,3 +1,10 @@
+Verision 0.2.0
+==============
+Released: 2017-04-07
+
+- Support to build SecurityPkg and OvmfPkg.
+- Support the new openssl build scheme.
+
 Version 0.1.0
 =============
 Released: 2017-03-11
